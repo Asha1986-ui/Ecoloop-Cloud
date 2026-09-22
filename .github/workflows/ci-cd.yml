@@ -1,0 +1,102 @@
+name: EcoLoop CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # -------------------------------------------------------------
+  # Job 1: Java / Spring Boot Backend Build & Unit Testing
+  # -------------------------------------------------------------
+  backend-ci:
+    name: Backend CI (Spring Boot 3.3.4 + JDK 21)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Execute Maven Tests & Package
+        run: mvn clean verify -B
+
+      - name: Upload Backend Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          retention-days: 5
+
+  # -------------------------------------------------------------
+  # Job 2: React / TypeScript Frontend Build & Verification
+  # -------------------------------------------------------------
+  frontend-ci:
+    name: Frontend CI (React 19 + TypeScript + Vite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package.json
+
+      - name: Install Frontend Dependencies
+        run: npm install
+
+      - name: Verify TypeScript & Build Production Bundle
+        run: npm run build
+
+      - name: Upload Frontend Static Dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 5
+
+  # -------------------------------------------------------------
+  # Job 3: Multi-Stage Docker Container Build Validation
+  # -------------------------------------------------------------
+  docker-validation:
+    name: Container Build & Health Validation
+    needs: [backend-ci, frontend-ci]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: ecoloop-backend:latest
+
+      - name: Build Frontend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: ecoloop-frontend:latest
