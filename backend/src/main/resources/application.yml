@@ -13,7 +13,7 @@ spring:
 
 ecoloop:
   jwt:
-    secret: ${JWT_SECRET:change-me-in-environment}
+    secret: ${JWT_SECRET:change-me-to-a-secure-256-bit-secret-key}
     expiration-ms: 86400000 # 24 hours
   ai:
     service-url: ${AI_SERVICE_URL:http://localhost:8000}
