@@ -108,9 +108,9 @@ jobs:
           push: true
           tags: ecoloopacr.azurecr.io/ecoloop-backend:${{ github.sha }}
 
-      - name: Build Frontend Docker Image
+      - name: Build and Push Frontend Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
-          push: false
-          tags: ecoloop-frontend:latest
+          push: true
+          tags: ecoloopacr.azurecr.io/ecoloop-frontend:${{ github.sha }}
