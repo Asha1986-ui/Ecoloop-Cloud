@@ -101,12 +101,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Backend Docker Image
+      - name: Build and Push Backend Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          push: false
-          tags: ecoloop-backend:latest
+          push: true
+          tags: ecoloopacr.azurecr.io/ecoloop-backend:${{ github.sha }}
 
       - name: Build Frontend Docker Image
         uses: docker/build-push-action@v5
